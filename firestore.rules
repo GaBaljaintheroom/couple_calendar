@@ -1,0 +1,93 @@
+rules_version = '2';
+
+// 구조와 흐름은 lib/data/couple_service.dart 참고.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function coupleAfter(coupleId) {
+      return getAfter(/databases/$(database)/documents/couples/$(coupleId));
+    }
+
+    // 프로필: 본인은 읽고 쓰기, 같은 커플의 상대는 읽기만.
+    match /users/{userId} {
+      function myCoupleId() {
+        return get(/databases/$(database)/documents/users/$(uid())).data.get('coupleId', null);
+      }
+
+      // coupleId는 내가 실제로 멤버인 커플로만 바꿀 수 있다.
+      function validCoupleLink() {
+        let c = request.resource.data.get('coupleId', null);
+        return c == null || uid() in coupleAfter(c).data.members;
+      }
+
+      allow read: if signedIn() && (
+        userId == uid()
+        || (resource.data.get('coupleId', null) != null
+            && resource.data.coupleId == myCoupleId())
+      );
+      allow create, update: if signedIn() && userId == uid() && validCoupleLink();
+      allow delete: if false;
+    }
+
+    match /couples/{coupleId} {
+      // 합류하려는 사람이 대기 중인 커플을 읽을 수 있어야 한다.
+      allow read: if signedIn() && (
+        uid() in resource.data.members || resource.data.members.size() == 1
+      );
+
+      allow create: if signedIn() && request.resource.data.members == [uid()];
+
+      allow update: if signedIn() && (isMemberUpdate() || isJoin());
+
+      // 멤버: 사귄 날짜·캘린더 이름·초대 코드 변경, 또는 자기 자신만 빠지기.
+      function isMemberUpdate() {
+        return uid() in resource.data.members
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['startDate', 'calendarName', 'inviteCode', 'inviteExpiresAt', 'members'])
+          && (request.resource.data.members == resource.data.members
+              || request.resource.data.members == resource.data.members.removeAll([uid()]))
+          && (!('calendarName' in request.resource.data)
+              || (request.resource.data.calendarName is string
+                  && request.resource.data.calendarName.size() <= 15));
+      }
+
+      // 초대 코드로 합류: 만료 전인 1인 커플에 자기 자신만 추가.
+      function isJoin() {
+        return !(uid() in resource.data.members)
+          && resource.data.members.size() == 1
+          && resource.data.get('inviteExpiresAt', null) != null
+          && resource.data.inviteExpiresAt > request.time
+          && request.resource.data.members == resource.data.members.concat([uid()])
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['members', 'inviteCode', 'inviteExpiresAt']);
+      }
+
+      // 커플이 함께 쓰는 데이터 (일정, 기념일 등).
+      match /{document=**} {
+        allow read, write: if signedIn()
+          && uid() in get(/databases/$(database)/documents/couples/$(coupleId)).data.members;
+      }
+    }
+
+    // 초대 코드 → 커플 id. 코드를 아는 사람만 조회할 수 있게 목록 조회는 막는다.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.createdBy == uid()
+        && uid() in coupleAfter(request.resource.data.coupleId).data.members;
+      allow delete: if signedIn() && (
+        resource.data.createdBy == uid()
+        || uid() in coupleAfter(resource.data.coupleId).data.members
+      );
+      allow update: if false;
+    }
+  }
+}

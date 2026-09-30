@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "947686882101",
+    "project_id": "calendar-47905",
+    "storage_bucket": "calendar-47905.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:947686882101:android:a728c0cb9e6196ab632a7c",
+        "android_client_info": {
+          "package_name": "com.junsupark.couple_calendar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "947686882101-pl3qrm97jk70qtsavp10679to2trcopa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.junsupark.couple_calendar",
+            "certificate_hash": "8de34b5d52002d9031c2904fe153a7015dd8f9d1"
+          }
+        },
+        {
+          "client_id": "947686882101-e6cmkctag6hh1tat5fjnkfrge3cd2njb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBn44F8NGuB8ADGxt_RKkjsjKljbld-VPY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "947686882101-e6cmkctag6hh1tat5fjnkfrge3cd2njb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "947686882101-p3cuflkhsj0vcvnqadjhgdisec1u1j58.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.junsupark.coupleCalendar"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
