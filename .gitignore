@@ -50,3 +50,15 @@ app.*.map.json
 # 로컬 비밀 값 (토큰 등) — 커밋하지 않는다
 .env
 .env.*
+
+# 서버용 키·인증서 — 절대 커밋하지 않는다
+*service-account*.json
+*-firebase-adminsdk-*.json
+*.p8
+*.p12
+*.pem
+*.mobileprovision
+
+# 로컬 도구 설정 (API 키·토큰이 들어갈 수 있음)
+.claude/settings.local.json
+.mcp.json
