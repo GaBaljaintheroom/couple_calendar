@@ -83,6 +83,59 @@ void main() {
     expect(find.text('챙길 것 1개 · 돗자리'), findsOneWidget);
   });
 
+  testWidgets('왼쪽으로 밀어 삭제하면 확인 후 사라진다', (tester) async {
+    await _pumpCalendar(tester);
+
+    await tester.ensureVisible(find.text('저녁 데이트'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.text('저녁 데이트'), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('삭제'));
+    await tester.pumpAndSettle();
+    expect(find.text('일정을 삭제하시겠습니까?'), findsOneWidget);
+
+    // 취소하면 그대로 남는다.
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+    expect(find.text('저녁 데이트'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('저녁 데이트'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.text('저녁 데이트'), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('삭제'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, '삭제'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('저녁 데이트'), findsNothing);
+    expect(find.text('1개의 일정'), findsOneWidget);
+  });
+
+  testWidgets('왼쪽으로 밀어 수정하면 기존 내용이 채워진 시트에서 고칠 수 있다', (tester) async {
+    await _pumpCalendar(tester);
+
+    await tester.ensureVisible(find.text('저녁 데이트'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.text('저녁 데이트'), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('수정'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('일정 수정'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '저녁 데이트'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '성수동 파스타바'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, '저녁 데이트 🍷');
+    await tester.pump();
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('저녁 데이트 🍷'), findsOneWidget);
+    expect(find.text('성수동 파스타바'), findsOneWidget);
+    expect(find.text('2개의 일정'), findsOneWidget);
+  });
+
   group('CoupleProfile', () {
     final profile = CoupleProfile(
       myName: '나',

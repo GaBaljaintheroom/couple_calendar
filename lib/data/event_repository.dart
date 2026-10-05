@@ -91,15 +91,17 @@ class EventRepository extends ChangeNotifier {
   final List<Event> _events = [];
 
   /// [day]의 일정을 시간순으로 반환한다. 종일 일정이 먼저 온다.
+  /// 여러 날에 걸친 일정은 시작일부터 종료일까지 매일 포함되고,
+  /// 시작일이 아닌 날에는 전날부터 이어지므로 종일 일정처럼 맨 위에 온다.
   List<Event> eventsOn(DateTime day, {Set<EventOwner>? owners}) {
+    int sortKey(Event e) =>
+        DateUtils.isSameDay(e.date, day) ? _minutes(e.startTime) : -1;
     final result =
         _events
-            .where((e) => _isSameDay(e.date, day))
+            .where((e) => e.occursOn(day))
             .where((e) => owners == null || owners.contains(e.owner))
             .toList()
-          ..sort(
-            (a, b) => _minutes(a.startTime).compareTo(_minutes(b.startTime)),
-          );
+          ..sort((a, b) => sortKey(a).compareTo(sortKey(b)));
     return result;
   }
 
@@ -112,7 +114,28 @@ class EventRepository extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    await collection.doc(event.id).set(_toMap(event));
+    await collection.doc(event.id).set({
+      ..._toMap(event),
+      'createdBy': _myUid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// 같은 id의 일정을 [event] 내용으로 바꾼다. 처음 등록한 사람과 시각은 유지된다.
+  Future<void> update(Event event) async {
+    final collection = _collection;
+    if (collection == null) {
+      final index = _events.indexWhere((e) => e.id == event.id);
+      if (index < 0) return;
+      _events[index] = event;
+      notifyListeners();
+      return;
+    }
+    await collection.doc(event.id).update({
+      ..._toMap(event),
+      'updatedBy': _myUid,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Future<void> remove(String id) async {
@@ -138,6 +161,7 @@ class EventRepository extends ChangeNotifier {
   Map<String, dynamic> _toMap(Event e) => {
     'title': e.title,
     'date': formatDate(e.date),
+    'endDate': e.isMultiDay ? formatDate(e.lastDate) : null,
     'owner': switch (e.owner) {
       EventOwner.together => _together,
       EventOwner.me => _myUid,
@@ -149,8 +173,6 @@ class EventRepository extends ChangeNotifier {
     'location': e.location,
     'memo': e.memo,
     'checklist': e.checklist,
-    'createdBy': _myUid,
-    'createdAt': FieldValue.serverTimestamp(),
   };
 
   Event? _fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -159,10 +181,12 @@ class EventRepository extends ChangeNotifier {
     final title = data['title'] as String?;
     if (date == null || title == null) return null;
     final owner = data['owner'] as String?;
+    final endDate = parseDate(data['endDate'] as String?);
     return Event(
       id: doc.id,
       title: title,
       date: date,
+      endDate: endDate != null && endDate.isAfter(date) ? endDate : null,
       owner: owner == _together
           ? EventOwner.together
           : owner == _myUid
@@ -186,7 +210,4 @@ class EventRepository extends ChangeNotifier {
   }
 
   static int _minutes(TimeOfDay? t) => t == null ? -1 : t.hour * 60 + t.minute;
-
-  static bool _isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
 }

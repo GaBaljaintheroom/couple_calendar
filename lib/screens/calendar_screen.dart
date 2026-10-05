@@ -61,6 +61,40 @@ class _CalendarScreenState extends State<CalendarScreen> {
     if (event != null) _save(_repository.add(event));
   }
 
+  Future<void> _editEvent(Event event) async {
+    final edited = await showEditEventSheet(
+      context,
+      event: event,
+      profile: widget.profile,
+    );
+    if (edited != null) _save(_repository.update(edited));
+  }
+
+  Future<void> _confirmDelete(Event event) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('일정을 삭제하시겠습니까?', style: AppTextStyles.headlineMd),
+        content: Text(
+          '\'${event.title}\' 일정이 두 사람의 캘린더에서 모두 사라져요.',
+          style: AppTextStyles.bodyMd,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) _save(_repository.remove(event.id));
+  }
+
   /// 저장은 기다리지 않는다 (화면에는 바로 반영되고, 오프라인이면 나중에 올라간다).
   void _save(Future<void> write) {
     write.catchError((Object e) {
@@ -117,7 +151,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               EventTimeline(
                 events: selectedEvents,
                 profile: profile,
-                onDelete: (event) => _save(_repository.remove(event.id)),
+                onEdit: _editEvent,
+                onDelete: _confirmDelete,
               ),
               const SizedBox(height: AppSpacing.lg),
               _QuickAddBar(onTap: _addEvent),

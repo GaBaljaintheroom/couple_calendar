@@ -11,6 +11,25 @@ Future<Event?> showAddEventSheet(
   BuildContext context, {
   required DateTime date,
   required CoupleProfile profile,
+}) => _showEventSheet(context, date: date, profile: profile);
+
+/// [event]의 내용을 채운 수정 시트. 저장하면 같은 id의 [Event]를, 닫으면 null을 반환한다.
+Future<Event?> showEditEventSheet(
+  BuildContext context, {
+  required Event event,
+  required CoupleProfile profile,
+}) => _showEventSheet(
+  context,
+  date: event.date,
+  profile: profile,
+  initial: event,
+);
+
+Future<Event?> _showEventSheet(
+  BuildContext context, {
+  required DateTime date,
+  required CoupleProfile profile,
+  Event? initial,
 }) {
   return showModalBottomSheet<Event>(
     context: context,
@@ -22,16 +41,24 @@ Future<Event?> showAddEventSheet(
       borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
     ),
     clipBehavior: Clip.antiAlias,
-    builder: (context) => _AddEventSheet(date: date, profile: profile),
+    builder: (context) =>
+        _AddEventSheet(date: date, profile: profile, initial: initial),
   );
 }
 
 /// 컨트롤러를 시트 수명에 묶어, 닫힘 애니메이션 도중 dispose되지 않게 한다.
 class _AddEventSheet extends StatefulWidget {
-  const _AddEventSheet({required this.date, required this.profile});
+  const _AddEventSheet({
+    required this.date,
+    required this.profile,
+    this.initial,
+  });
 
   final DateTime date;
   final CoupleProfile profile;
+
+  /// 수정할 일정. null이면 새 일정 등록.
+  final Event? initial;
 
   @override
   State<_AddEventSheet> createState() => _AddEventSheetState();
@@ -44,7 +71,8 @@ class _AddEventSheetState extends State<_AddEventSheet> {
   final _checklistController = TextEditingController();
   final _checklistFocus = FocusNode();
 
-  late DateTime _date = widget.date;
+  late DateTime _startDate = DateUtils.dateOnly(widget.date);
+  late DateTime _endDate = _startDate;
   EventOwner _owner = EventOwner.together;
   EventCategory _category = EventCategory.date;
   bool _allDay = false;
@@ -52,6 +80,26 @@ class _AddEventSheetState extends State<_AddEventSheet> {
   TimeOfDay _endTime = const TimeOfDay(hour: 13, minute: 0);
   final List<String> _checklist = [];
   bool _addingChecklistItem = false;
+
+  bool get _editing => widget.initial != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final event = widget.initial;
+    if (event == null) return;
+    _titleController.text = event.title;
+    _locationController.text = event.location ?? '';
+    _memoController.text = event.memo ?? '';
+    _startDate = DateUtils.dateOnly(event.date);
+    _endDate = DateUtils.dateOnly(event.lastDate);
+    _owner = event.owner;
+    _category = event.category;
+    _allDay = event.startTime == null;
+    if (event.startTime case final start?) _startTime = start;
+    if (event.endTime case final end?) _endTime = end;
+    _checklist.addAll(event.checklist);
+  }
 
   @override
   void dispose() {
@@ -63,22 +111,53 @@ class _AddEventSheetState extends State<_AddEventSheet> {
     super.dispose();
   }
 
-  int get _durationMinutes =>
-      (_endTime.hour * 60 + _endTime.minute) -
-      (_startTime.hour * 60 + _startTime.minute);
+  static DateTime _at(DateTime date, TimeOfDay time) =>
+      DateTime(date.year, date.month, date.day, time.hour, time.minute);
+
+  DateTime get _start => _at(_startDate, _startTime);
+  DateTime get _end => _at(_endDate, _endTime);
+
+  int get _durationMinutes => _end.difference(_start).inMinutes;
+
+  /// 시작일과 종료일을 모두 포함한 날 수.
+  int get _dayCount =>
+      DateTime.utc(_endDate.year, _endDate.month, _endDate.day)
+          .difference(
+            DateTime.utc(_startDate.year, _startDate.month, _startDate.day),
+          )
+          .inDays +
+      1;
 
   bool get _canSave =>
       _titleController.text.trim().isNotEmpty &&
-      (_allDay || _durationMinutes > 0);
+      (_allDay ? _dayCount >= 1 : _durationMinutes > 0);
 
-  Future<void> _pickDate() async {
+  /// 시작을 [newStart]로 옮기면서 기존 길이를 유지하도록 종료도 함께 민다.
+  void _moveStart(DateTime newStart) {
+    final length = _durationMinutes > 0 ? _durationMinutes : 60;
+    final end = newStart.add(Duration(minutes: length));
+    _startDate = DateUtils.dateOnly(newStart);
+    _startTime = TimeOfDay.fromDateTime(newStart);
+    _endDate = DateUtils.dateOnly(end);
+    _endTime = TimeOfDay.fromDateTime(end);
+  }
+
+  Future<void> _pickDate({required bool start}) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _date,
-      firstDate: DateTime(2020),
+      initialDate: start ? _startDate : _endDate,
+      // 종료일은 시작일 이전으로 고를 수 없다.
+      firstDate: start ? DateTime(2020) : _startDate,
       lastDate: DateTime(2035, 12, 31),
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked == null) return;
+    setState(() {
+      if (start) {
+        _moveStart(_at(picked, _startTime));
+      } else {
+        _endDate = DateUtils.dateOnly(picked);
+      }
+    });
   }
 
   Future<void> _pickTime({required bool start}) async {
@@ -89,14 +168,7 @@ class _AddEventSheetState extends State<_AddEventSheet> {
     if (picked == null) return;
     setState(() {
       if (start) {
-        // 시작을 옮기면 기존 길이를 유지하도록 종료도 함께 민다.
-        final length = _durationMinutes > 0 ? _durationMinutes : 60;
-        _startTime = picked;
-        final endMinutes = (picked.hour * 60 + picked.minute + length).clamp(
-          0,
-          23 * 60 + 59,
-        );
-        _endTime = TimeOfDay(hour: endMinutes ~/ 60, minute: endMinutes % 60);
+        _moveStart(_at(_startDate, picked));
       } else {
         _endTime = picked;
       }
@@ -125,9 +197,12 @@ class _AddEventSheetState extends State<_AddEventSheet> {
     Navigator.pop(
       context,
       Event(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        id:
+            widget.initial?.id ??
+            DateTime.now().microsecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
-        date: _date,
+        date: _startDate,
+        endDate: _dayCount > 1 ? _endDate : null,
         owner: _owner,
         category: _category,
         startTime: _allDay ? null : _startTime,
@@ -154,7 +229,7 @@ class _AddEventSheetState extends State<_AddEventSheet> {
             ListenableBuilder(
               listenable: _titleController,
               builder: (context, _) => SheetHeader(
-                title: '새로운 일정 등록',
+                title: _editing ? '일정 수정' : '새로운 일정 등록',
                 canSave: _canSave,
                 onClose: () => Navigator.pop(context),
                 onSave: _save,
@@ -189,7 +264,11 @@ class _AddEventSheetState extends State<_AddEventSheet> {
             ListenableBuilder(
               listenable: _titleController,
               builder: (context, _) => SheetSubmitBar(
-                label: _owner == EventOwner.together ? '우리 일정 등록하기' : '일정 등록하기',
+                label: _editing
+                    ? '수정 완료'
+                    : _owner == EventOwner.together
+                    ? '우리 일정 등록하기'
+                    : '일정 등록하기',
                 onPressed: _canSave ? _save : null,
               ),
             ),
@@ -207,7 +286,8 @@ class _AddEventSheetState extends State<_AddEventSheet> {
         const SizedBox(height: AppSpacing.xs),
         TextField(
           controller: _titleController,
-          autofocus: true,
+          // 수정할 때는 내용을 먼저 볼 수 있게 키보드를 띄우지 않는다.
+          autofocus: !_editing,
           textInputAction: TextInputAction.next,
           style: AppTextStyles.headlineMd,
           decoration: filledInputDecoration(
@@ -284,8 +364,9 @@ class _AddEventSheetState extends State<_AddEventSheet> {
   }
 
   Widget _buildDateTime() {
-    final dateText = DateFormat('yyyy년 M월 d일 (E)', 'ko_KR').format(_date);
+    final dateFormat = DateFormat('yyyy년 M월 d일 (E)', 'ko_KR');
     final duration = _durationMinutes;
+    final days = _dayCount;
 
     return FormSection(
       child: Column(
@@ -330,24 +411,40 @@ class _AddEventSheetState extends State<_AddEventSheet> {
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          if (_allDay)
-            _DateTimeRow(label: '날짜', date: dateText, onDateTap: _pickDate)
-          else ...[
-            _DateTimeRow(
-              label: '시작',
-              date: dateText,
-              time: formatTime(_startTime),
-              onDateTap: _pickDate,
-              onTimeTap: () => _pickTime(start: true),
-            ),
+          _DateTimeRow(
+            label: '시작',
+            date: dateFormat.format(_startDate),
+            time: _allDay ? null : formatTime(_startTime),
+            onDateTap: () => _pickDate(start: true),
+            onTimeTap: () => _pickTime(start: true),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _DateTimeRow(
+            label: '종료',
+            date: dateFormat.format(_endDate),
+            time: _allDay ? null : formatTime(_endTime),
+            onDateTap: () => _pickDate(start: false),
+            onTimeTap: () => _pickTime(start: false),
+          ),
+          if (_allDay && days > 1) ...[
             const SizedBox(height: AppSpacing.sm),
-            _DateTimeRow(
-              label: '종료',
-              date: dateText,
-              time: formatTime(_endTime),
-              onDateTap: _pickDate,
-              onTimeTap: () => _pickTime(start: false),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const Icon(Icons.schedule, size: 16, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    '총 $days일 동안의 소중한 시간 💕',
+                    style: AppTextStyles.labelSm.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
             ),
+          ],
+          if (!_allDay) ...[
             const SizedBox(height: AppSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -362,7 +459,7 @@ class _AddEventSheetState extends State<_AddEventSheet> {
                   child: Text(
                     duration > 0
                         ? '총 ${_formatDuration(duration)} 동안의 소중한 시간 💕'
-                        : '종료 시간이 시작 시간보다 빨라요',
+                        : '종료 일시가 시작 일시보다 빨라요',
                     style: AppTextStyles.labelSm.copyWith(
                       color: duration > 0
                           ? AppColors.onSurfaceVariant
@@ -510,11 +607,14 @@ class _AddEventSheetState extends State<_AddEventSheet> {
   }
 
   static String _formatDuration(int minutes) {
-    final h = minutes ~/ 60;
+    final d = minutes ~/ (24 * 60);
+    final h = minutes % (24 * 60) ~/ 60;
     final m = minutes % 60;
-    if (h == 0) return '$m분';
-    if (m == 0) return '$h시간';
-    return '$h시간 $m분';
+    return [
+      if (d > 0) '$d일',
+      if (h > 0) '$h시간',
+      if (m > 0 || (d == 0 && h == 0)) '$m분',
+    ].join(' ');
   }
 }
 

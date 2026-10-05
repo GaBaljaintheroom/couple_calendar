@@ -69,6 +69,60 @@ void main() {
       expect(partnerView.checklist, ['물병']);
     });
 
+    test('여러 날에 걸친 일정은 시작일부터 종료일까지 매일 보인다', () async {
+      await mine.add(
+        Event(
+          id: 'e5',
+          title: '제주 여행',
+          date: day,
+          endDate: DateTime(2026, 10, 5),
+          owner: EventOwner.together,
+          startTime: const TimeOfDay(hour: 9, minute: 0),
+          endTime: const TimeOfDay(hour: 18, minute: 0),
+        ),
+      );
+      await pumpEventQueue();
+
+      for (final d in [3, 4, 5]) {
+        final event = partners.eventsOn(DateTime(2026, 10, d)).single;
+        expect(event.date, day);
+        expect(event.lastDate, DateTime(2026, 10, 5));
+        expect(event.isMultiDay, isTrue);
+      }
+      expect(partners.eventsOn(DateTime(2026, 10, 2)), isEmpty);
+      expect(partners.eventsOn(DateTime(2026, 10, 6)), isEmpty);
+    });
+
+    test('여러 날 일정은 시작일이 아닌 날에 맨 위에 온다', () async {
+      await mine.add(
+        Event(
+          id: 'e6',
+          title: '아침 운동',
+          date: DateTime(2026, 10, 4),
+          owner: EventOwner.me,
+          startTime: const TimeOfDay(hour: 7, minute: 0),
+          endTime: const TimeOfDay(hour: 8, minute: 0),
+        ),
+      );
+      await mine.add(
+        Event(
+          id: 'e7',
+          title: '캠핑',
+          date: day,
+          endDate: DateTime(2026, 10, 4),
+          owner: EventOwner.together,
+          startTime: const TimeOfDay(hour: 19, minute: 0),
+          endTime: const TimeOfDay(hour: 11, minute: 0),
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(mine.eventsOn(DateTime(2026, 10, 4)).map((e) => e.title), [
+        '캠핑',
+        '아침 운동',
+      ]);
+    });
+
     test('"우리 함께" 일정은 두 사람 모두에게 함께 일정이다', () async {
       await partners.add(
         Event(id: 'e2', title: '데이트', date: day, owner: EventOwner.together),
