@@ -251,6 +251,26 @@ flutter run -t tool/screenshot_main.dart --dart-define=SCENE=main
 
 > 릴리스 빌드는 아직 개발용 서명 키로 서명됩니다. Play 스토어 출시 전에 출시용 키를 만들고, 그 SHA-1을 Firebase에 등록해야 합니다.
 
+## iOS 테스트 배포 (TestFlight)
+
+App Store Connect 앱: **데이로그- 커플 캘린더** (번들 ID `com.junsupark.coupleCalendar`, 팀 `A255X3NN22`)
+
+1. Android와 마찬가지로 `pubspec.yaml`의 빌드 번호를 올립니다. 같은 번호는 다시 올릴 수 없습니다.
+2. 서명 없이 아카이브한 뒤, 내보낼 때 App Store 배포 인증서로 서명해 바로 업로드합니다.
+   ```bash
+   flutter build ios --release --no-codesign
+   xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
+     -destination generic/platform=iOS -archivePath build/ios/archive/Runner.xcarchive \
+     archive CODE_SIGNING_ALLOWED=NO
+   xcodebuild -exportArchive -archivePath build/ios/archive/Runner.xcarchive \
+     -exportPath build/ios/ipa -exportOptionsPlist ios/ExportOptions.plist \
+     -allowProvisioningUpdates
+   ```
+3. 처리(수 분~30분)가 끝나면 App Store Connect → TestFlight에서 테스터 그룹에 빌드를 추가합니다.
+
+> - 팀에 등록된 아이폰이 없어 `flutter build ipa`는 개발용 프로필을 만들지 못해 실패합니다. 기기를 등록하면 `flutter build ipa`로도 됩니다.
+> - 이 Mac의 키체인에 **Apple Distribution** 인증서가 있어야 합니다. 처음 서명할 때 키체인 허용 창이 뜨면 "항상 허용"을 누릅니다.
+
 ---
 
 ## 보안 주의
