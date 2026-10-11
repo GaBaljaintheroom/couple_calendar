@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/user_profile.dart';
+import 'push_service.dart';
 
 /// 초대 코드 연결 실패. [message]는 그대로 사용자에게 보여준다.
 class InviteException implements Exception {
@@ -33,6 +34,9 @@ class CoupleService {
 
   /// 커플 데이터(일정·기념일) 저장소도 같은 DB를 쓴다.
   FirebaseFirestore get firestore => _db;
+
+  /// 이 폰의 푸시 알림 주소를 내 프로필에 올린다.
+  late final push = PushService(db: _db);
   final DateTime Function() _now;
   final Random _random;
 

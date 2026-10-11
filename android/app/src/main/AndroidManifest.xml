@@ -30,6 +30,16 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- 푸시 알림 (functions/index.js가 보낸다) -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="events" />
         <!-- 홈 화면 "D+일수" 위젯 -->
         <receiver
             android:name=".DayWidgetProvider"

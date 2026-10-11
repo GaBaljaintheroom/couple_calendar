@@ -1,0 +1,16 @@
+{
+  "name": "daylog-functions",
+  "private": true,
+  "description": "데이로그 푸시 알림 (일정 등록 알림, 당일 아침 알림)",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.0.0"
+  }
+}

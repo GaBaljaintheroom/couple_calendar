@@ -41,6 +41,7 @@ class _HomeShellState extends State<HomeShell> {
     super.initState();
     _createRepositories();
     DayWidget.update(widget.session.coupleProfile);
+    widget.coupleService.push.register(widget.session.me.uid);
   }
 
   @override

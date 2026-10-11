@@ -198,6 +198,7 @@ class AccountScreen extends StatelessWidget {
               TextButton(
                 onPressed: () async {
                   await DayWidget.clear();
+                  await coupleService.push.unregister();
                   await authService.signOut();
                 },
                 style: TextButton.styleFrom(

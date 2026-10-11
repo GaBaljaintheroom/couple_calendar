@@ -5,4 +5,5 @@
     <string name="day_widget_preview_names">우리 \u2665\uFE0E 함께</string>
     <string name="day_widget_preview_days">D+100</string>
     <string name="day_widget_preview_next">200일까지 100일</string>
+    <color name="notification_color">#FFE07A5F</color>
 </resources>
