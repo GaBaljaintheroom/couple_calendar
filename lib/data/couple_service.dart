@@ -179,7 +179,7 @@ class CoupleService {
     });
   }
 
-  /// 캘린더에 표시할 내 색. null이면 기본 색으로 돌아간다.
+  /// 캘린더에 표시할 나의 색. null이면 기본 색으로 돌아간다.
   Future<void> setMyColor(String uid, int? argb) =>
       _users.doc(uid).update({'color': argb ?? FieldValue.delete()});
 
