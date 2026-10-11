@@ -44,6 +44,11 @@ class PillLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final style = AppTextStyles.labelSm.copyWith(
+      color: foreground,
+      fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
+      leadingDistribution: TextLeadingDistribution.even,
+    );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -52,10 +57,10 @@ class PillLabel extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: AppTextStyles.labelSm.copyWith(
-          color: foreground,
-          fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
-        ),
+        style: style,
+        // 한글은 시스템 글꼴로 대신 그려지는데, 그 글꼴의 위아래 치수로 줄 높이를 잡으면
+        // iOS에서 글자가 1pt쯤 위로 뜬다. 줄 높이를 앱 글꼴 기준으로 고정해 가운데에 둔다.
+        strutStyle: StrutStyle.fromTextStyle(style, forceStrutHeight: true),
       ),
     );
   }
