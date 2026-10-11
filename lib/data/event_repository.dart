@@ -200,6 +200,7 @@ class EventRepository extends ChangeNotifier {
       location: data['location'] as String?,
       memo: data['memo'] as String?,
       checklist: List<String>.from(data['checklist'] as List? ?? const []),
+      createdByMe: data['createdBy'] == _myUid,
     );
   }
 

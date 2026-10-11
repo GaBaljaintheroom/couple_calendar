@@ -67,6 +67,10 @@ void main() {
       expect(partnerView.location, '성수');
       expect(partnerView.memo, '운동복 챙기기');
       expect(partnerView.checklist, ['물병']);
+
+      // 내 일정은 나만 고칠 수 있다.
+      expect(myView.editable, isTrue);
+      expect(partnerView.editable, isFalse);
     });
 
     test('여러 날에 걸친 일정은 시작일부터 종료일까지 매일 보인다', () async {

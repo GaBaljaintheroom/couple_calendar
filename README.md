@@ -208,6 +208,15 @@ flutter test
 
 Firebase는 `fake_cloud_firestore`와 `firebase_auth_mocks`로 대체해서, 실제 서버 없이 테스트합니다.
 
+보안 규칙과 서버 함수는 따로 테스트합니다.
+
+```bash
+# firestore.rules (Firestore 에뮬레이터, Java 21 이상 필요)
+cd firestore-rules-test && npm install && npm test
+# 알림 문구 (functions/messages.js)
+cd functions && npm test
+```
+
 ---
 
 ## 앱 아이콘 · 스플래시

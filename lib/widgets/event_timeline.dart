@@ -131,6 +131,8 @@ class _TimelineRow extends StatelessWidget {
               padding: EdgeInsets.only(bottom: isLast ? 0 : AppSpacing.gutter),
               child: Slidable(
                 groupTag: 'event-timeline',
+                // 상대가 등록한 상대 일정은 밀어도 수정·삭제 버튼이 나오지 않는다.
+                enabled: event.editable,
                 endActionPane: ActionPane(
                   motion: const DrawerMotion(),
                   extentRatio: 0.42,
@@ -254,6 +256,18 @@ class _EventCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (!event.editable)
+                const Padding(
+                  padding: EdgeInsets.only(right: AppSpacing.gutter),
+                  child: Tooltip(
+                    message: '상대가 등록한 일정이라 수정할 수 없어요',
+                    child: Icon(
+                      Icons.lock_outline,
+                      size: 14,
+                      color: AppColors.outlineVariant,
+                    ),
+                  ),
+                ),
             ],
           ),
           Padding(

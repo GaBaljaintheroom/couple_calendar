@@ -210,6 +210,7 @@ class _AddEventSheetState extends State<_AddEventSheet> {
         location: location.isEmpty ? null : location,
         memo: memo.isEmpty ? null : memo,
         checklist: List.unmodifiable(_checklist),
+        createdByMe: widget.initial?.createdByMe ?? true,
       ),
     );
   }

@@ -71,10 +71,29 @@ service cloud.firestore {
                .hasOnly(['members', 'inviteCode', 'inviteExpiresAt']);
       }
 
-      // 커플이 함께 쓰는 데이터 (일정, 기념일 등).
-      match /{document=**} {
-        allow read, write: if signedIn()
+      function isMember() {
+        return signedIn()
           && uid() in get(/databases/$(database)/documents/couples/$(coupleId)).data.members;
+      }
+
+      // 일정: 둘 다 볼 수 있지만, 고치고 지우는 건 "우리 함께" 일정이나 내가 등록한 일정만.
+      // (lib/models/event.dart의 Event.editable과 같은 규칙)
+      match /events/{eventId} {
+        function editable() {
+          return resource.data.owner == 'together'
+            || resource.data.get('createdBy', null) == uid();
+        }
+
+        allow read: if isMember();
+        allow create: if isMember() && request.resource.data.createdBy == uid();
+        allow update: if isMember() && editable()
+          && request.resource.data.get('createdBy', null) == resource.data.get('createdBy', null);
+        allow delete: if isMember() && editable();
+      }
+
+      // 그 밖에 커플이 함께 쓰는 데이터 (기념일, 기념일 메모).
+      match /{collection}/{document=**} {
+        allow read, write: if collection != 'events' && isMember();
       }
     }
 

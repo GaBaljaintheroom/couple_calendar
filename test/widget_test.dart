@@ -185,6 +185,54 @@ void main() {
     expect(find.text('전시회'), findsOneWidget);
   });
 
+  testWidgets('상대가 등록한 상대 일정은 밀어도 수정·삭제가 나오지 않는다', (tester) async {
+    await initializeDateFormatting('ko_KR');
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final repository = EventRepository.memory([
+      Event(
+        id: 'p',
+        title: '서연 필라테스',
+        date: today,
+        owner: EventOwner.partner,
+        createdByMe: false,
+      ),
+      Event(
+        id: 't',
+        title: '서연이 만든 데이트',
+        date: today,
+        owner: EventOwner.together,
+        createdByMe: false,
+      ),
+    ]);
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: CalendarScreen(repository: repository),
+      ),
+    );
+
+    Future<void> swipe(String title) async {
+      await tester.ensureVisible(find.text(title));
+      await tester.pumpAndSettle();
+      await tester.drag(find.text(title), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+    }
+
+    await swipe('서연 필라테스');
+    expect(find.text('삭제'), findsNothing);
+    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+
+    // "우리 함께" 일정은 상대가 만들었어도 고칠 수 있다.
+    await swipe('서연이 만든 데이트');
+    expect(find.text('삭제'), findsOneWidget);
+  });
+
   group('CoupleProfile', () {
     final profile = CoupleProfile(
       myName: '나',

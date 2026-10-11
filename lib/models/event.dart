@@ -30,6 +30,7 @@ class Event {
     this.location,
     this.memo,
     this.checklist = const [],
+    this.createdByMe = true,
   });
 
   final String id;
@@ -51,6 +52,13 @@ class Event {
 
   /// 함께 챙길 것.
   final List<String> checklist;
+
+  /// 내가 등록한 일정인지. 새로 만드는 일정은 항상 내 것이다.
+  final bool createdByMe;
+
+  /// 수정·삭제할 수 있는지. "우리 함께" 일정이나 내가 등록한 일정만 된다.
+  /// 서버(firestore.rules)도 같은 규칙으로 막는다.
+  bool get editable => owner == EventOwner.together || createdByMe;
 
   /// 마지막 날짜. 하루짜리 일정이면 [date]와 같다.
   DateTime get lastDate => endDate ?? date;
