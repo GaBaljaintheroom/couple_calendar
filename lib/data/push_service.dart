@@ -35,7 +35,11 @@ class PushService {
         sound: true,
       );
       final token = await _fm.getToken();
-      if (token != null) await saveToken(uid, token);
+      if (token != null) {
+        // 개발 중 Firebase 콘솔에서 이 기기로 시험 알림을 보낼 때 쓴다 (릴리스 빌드에는 찍히지 않는다).
+        if (kDebugMode) debugPrint('FCM token: $token');
+        await saveToken(uid, token);
+      }
       _refresh ??= _fm.onTokenRefresh.listen((t) {
         final current = _uid;
         if (current != null) saveToken(current, t);
