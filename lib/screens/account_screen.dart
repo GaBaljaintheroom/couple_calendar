@@ -50,12 +50,12 @@ class AccountScreen extends StatelessWidget {
     await coupleService.setCalendarName(session.couple.id, name);
   }
 
-  /// 우리 함께·내 색을 고른다. 상대 색은 상대가 자기 프로필에서 정한다.
+  /// 우리 함께·나의 색을 고른다. 상대 색은 상대가 자기 프로필에서 정한다.
   Future<void> _editColor(BuildContext context, EventOwner owner) async {
     final profile = session.coupleProfile;
     final choice = await showOwnerColorSheet(
       context,
-      title: owner == EventOwner.together ? '우리 함께 색' : '내 색',
+      title: owner == EventOwner.together ? '우리 함께 색' : '나의 색',
       previewLabel: profile.nameOf(owner),
       current: profile.customColorOf(owner),
       defaultStyle: OwnerStyle.defaultOf(owner),
@@ -164,8 +164,8 @@ class AccountScreen extends StatelessWidget {
                   },
                   label: switch (owner) {
                     EventOwner.together => '우리 함께',
-                    EventOwner.me => '내 색',
-                    EventOwner.partner => '${partner.name}님 색',
+                    EventOwner.me => '나의 색',
+                    EventOwner.partner => '${partner.name}의 색',
                   },
                   value: '',
                   trailing: _ColorDot(profile.styleOf(owner).dot),
