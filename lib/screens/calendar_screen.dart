@@ -43,6 +43,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _selectedDay = DateTime.now();
   OwnerFilter _filter;
 
+  /// 날짜를 누르면 이 위치(선택한 날 제목)까지 내려가 일정 목록을 보여준다.
+  final _dayHeaderKey = GlobalKey();
+
+  void _scrollToEvents(DateTime day) {
+    if (_eventsOn(day).isEmpty) return;
+    // 목록이 새 날짜로 다시 그려진 뒤에 움직인다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = _dayHeaderKey.currentContext;
+      if (target == null || !target.mounted) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
   @override
   void dispose() {
     _fallbackRepository?.dispose();
@@ -139,11 +156,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   _selectedDay = selected;
                   _focusedDay = focused;
                 }),
+                onDayTapped: _scrollToEvents,
                 onPageChanged: (focused) =>
                     setState(() => _focusedDay = focused),
               ),
               const SizedBox(height: AppSpacing.lg),
               _DayHeader(
+                key: _dayHeaderKey,
                 day: _selectedDay,
                 count: selectedEvents.length,
                 onAdd: _addEvent,
@@ -235,6 +254,7 @@ class _OwnerFilterChips extends StatelessWidget {
 
 class _DayHeader extends StatelessWidget {
   const _DayHeader({
+    super.key,
     required this.day,
     required this.count,
     required this.onAdd,

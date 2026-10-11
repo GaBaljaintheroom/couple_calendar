@@ -17,6 +17,7 @@ class MonthCalendarCard extends StatefulWidget {
     required this.profile,
     required this.eventLoader,
     required this.onDaySelected,
+    this.onDayTapped,
     required this.onPageChanged,
   });
 
@@ -27,6 +28,9 @@ class MonthCalendarCard extends StatefulWidget {
   final CoupleProfile profile;
   final List<Event> Function(DateTime day) eventLoader;
   final void Function(DateTime selected, DateTime focused) onDaySelected;
+
+  /// 날짜 칸을 직접 눌렀을 때만 ('오늘' 버튼은 제외).
+  final ValueChanged<DateTime>? onDayTapped;
   final ValueChanged<DateTime> onPageChanged;
 
   @override
@@ -74,7 +78,10 @@ class _MonthCalendarCardState extends State<MonthCalendarCard> {
             daysOfWeekHeight: 28,
             rowHeight: 52,
             onCalendarCreated: (controller) => _pageController = controller,
-            onDaySelected: widget.onDaySelected,
+            onDaySelected: (selected, focused) {
+              widget.onDaySelected(selected, focused);
+              widget.onDayTapped?.call(selected);
+            },
             onPageChanged: widget.onPageChanged,
             calendarBuilders: CalendarBuilders<Event>(
               dowBuilder: (context, day) => _DowLabel(day: day),

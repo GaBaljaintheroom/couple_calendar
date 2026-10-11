@@ -1,6 +1,9 @@
+import 'package:couple_calendar/data/event_repository.dart';
 import 'package:couple_calendar/models/couple_profile.dart';
+import 'package:couple_calendar/models/event.dart';
 import 'package:couple_calendar/screens/calendar_screen.dart';
 import 'package:couple_calendar/theme/app_theme.dart';
+import 'package:couple_calendar/widgets/month_calendar_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -134,6 +137,52 @@ void main() {
     expect(find.text('저녁 데이트 🍷'), findsOneWidget);
     expect(find.text('성수동 파스타바'), findsOneWidget);
     expect(find.text('2개의 일정'), findsOneWidget);
+  });
+
+  testWidgets('일정이 있는 날짜를 누르면 일정 목록까지 내려가고, 없는 날은 그대로다', (tester) async {
+    await initializeDateFormatting('ko_KR');
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // 같은 달 안에서 오늘이 아닌 날 두 개.
+    final withEvent = today.day <= 14 ? today.day + 7 : today.day - 7;
+    final empty = today.day <= 14 ? today.day + 8 : today.day - 8;
+    final repository = EventRepository.memory([
+      Event(
+        id: 'x',
+        title: '전시회',
+        date: DateTime(now.year, now.month, withEvent),
+        owner: EventOwner.together,
+      ),
+    ]);
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: CalendarScreen(repository: repository),
+      ),
+    );
+
+    double offset() => tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position
+        .pixels;
+    Finder dayCell(int day) => find.descendant(
+      of: find.byType(MonthCalendarCard),
+      matching: find.text('$day'),
+    );
+
+    await tester.tap(dayCell(empty).first);
+    await tester.pumpAndSettle();
+    expect(offset(), 0);
+
+    await tester.tap(dayCell(withEvent).first);
+    await tester.pumpAndSettle();
+    expect(offset(), greaterThan(0));
+    expect(find.text('전시회'), findsOneWidget);
   });
 
   group('CoupleProfile', () {
