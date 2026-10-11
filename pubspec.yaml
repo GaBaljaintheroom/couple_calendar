@@ -44,6 +44,7 @@ dependencies:
   cloud_firestore: ^6.10.0
   share_plus: ^13.3.0
   flutter_slidable: ^4.0.3
+  home_widget: ^0.10.0
 
 dev_dependencies:
   flutter_test:

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/anniversary_repository.dart';
 import '../data/auth_service.dart';
 import '../data/couple_service.dart';
+import '../data/day_widget.dart';
 import '../data/event_repository.dart';
 // import '../theme/app_theme.dart'; // _ComingSoon에서만 사용
 import 'account_screen.dart';
@@ -39,6 +40,7 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     _createRepositories();
+    DayWidget.update(widget.session.coupleProfile);
   }
 
   @override
@@ -49,6 +51,14 @@ class _HomeShellState extends State<HomeShell> {
     if (old.couple.id != now.couple.id || old.partner.uid != now.partner.uid) {
       _disposeRepositories();
       _createRepositories();
+    }
+    // 사귄 날짜나 이름이 바뀌면 위젯도 바꾼다.
+    final before = old.coupleProfile;
+    final after = now.coupleProfile;
+    if (before.startDate != after.startDate ||
+        before.myName != after.myName ||
+        before.partnerName != after.partnerName) {
+      DayWidget.update(after);
     }
   }
 

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../data/auth_service.dart';
 import '../data/couple_service.dart';
+import '../data/day_widget.dart';
 import '../models/couple_profile.dart';
 import '../models/event.dart';
 import '../theme/app_theme.dart';
@@ -91,7 +92,9 @@ class AccountScreen extends StatelessWidget {
         ],
       ),
     );
-    if (ok == true) await coupleService.disconnect(session.me);
+    if (ok != true) return;
+    await DayWidget.clear();
+    await coupleService.disconnect(session.me);
   }
 
   @override
@@ -165,7 +168,7 @@ class AccountScreen extends StatelessWidget {
                   label: switch (owner) {
                     EventOwner.together => '우리 함께',
                     EventOwner.me => '나의 색',
-                    EventOwner.partner => '${partner.name}의 색',
+                    EventOwner.partner => '${partner.name}님 색',
                   },
                   value: '',
                   trailing: _ColorDot(profile.styleOf(owner).dot),
@@ -193,7 +196,10 @@ class AccountScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextButton(
-                onPressed: authService.signOut,
+                onPressed: () async {
+                  await DayWidget.clear();
+                  await authService.signOut();
+                },
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.onSurfaceVariant,
                 ),

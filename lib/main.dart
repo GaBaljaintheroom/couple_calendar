@@ -6,6 +6,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'data/auth_service.dart';
 import 'data/couple_service.dart';
+import 'data/day_widget.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/session_gate.dart';
@@ -16,6 +17,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('ko_KR');
+  await DayWidget.init();
   runApp(
     CoupleCalendarApp(
       authService: AuthService(),

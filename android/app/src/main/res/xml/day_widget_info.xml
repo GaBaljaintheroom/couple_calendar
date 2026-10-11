@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 일수는 위젯이 계산하므로 30분(시스템 최소)마다 다시 그려 자정을 넘기면 바뀐다. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/day_widget_description"
+    android:initialLayout="@layout/day_widget"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:previewLayout="@layout/day_widget_preview"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen" />
