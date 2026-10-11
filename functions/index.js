@@ -57,7 +57,10 @@ async function sendTo(uids, { title, body }) {
   for (const uid of uids) {
     const userRef = db.doc(`users/${uid}`);
     const tokens = (await userRef.get()).data()?.fcmTokens || [];
-    if (tokens.length === 0) continue;
+    if (tokens.length === 0) {
+      logger.info(`보낼 폰 없음 (${uid}): 앱에서 알림을 허용하지 않았거나 새 버전 설치 전`);
+      continue;
+    }
 
     const result = await getMessaging().sendEachForMulticast({
       tokens,
@@ -73,5 +76,12 @@ async function sendTo(uids, { title, body }) {
     if (stale.length > 0) {
       await userRef.update({ fcmTokens: FieldValue.arrayRemove(...stale) });
     }
+    logger.info(`"${title}" → ${uid}: 폰 ${tokens.length}대 중 ${result.successCount}대 성공`
+      + (stale.length > 0 ? `, 만료된 주소 ${stale.length}개 삭제` : ''));
+    result.responses.forEach((r, i) => {
+      if (r.error && !stale.includes(tokens[i])) {
+        logger.warn(`발송 실패 (${uid}): ${r.error.code} ${r.error.message}`);
+      }
+    });
   }
 }
