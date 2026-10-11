@@ -46,16 +46,18 @@ service cloud.firestore {
 
       allow update: if signedIn() && (isMemberUpdate() || isJoin());
 
-      // 멤버: 사귄 날짜·캘린더 이름·초대 코드 변경, 또는 자기 자신만 빠지기.
+      // 멤버: 사귄 날짜·캘린더 이름·함께 색·초대 코드 변경, 또는 자기 자신만 빠지기.
       function isMemberUpdate() {
         return uid() in resource.data.members
           && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['startDate', 'calendarName', 'inviteCode', 'inviteExpiresAt', 'members'])
+               .hasOnly(['startDate', 'calendarName', 'togetherColor', 'inviteCode', 'inviteExpiresAt', 'members'])
           && (request.resource.data.members == resource.data.members
               || request.resource.data.members == resource.data.members.removeAll([uid()]))
           && (!('calendarName' in request.resource.data)
               || (request.resource.data.calendarName is string
-                  && request.resource.data.calendarName.size() <= 15));
+                  && request.resource.data.calendarName.size() <= 15))
+          && (!('togetherColor' in request.resource.data)
+              || request.resource.data.togetherColor is int);
       }
 
       // 초대 코드로 합류: 만료 전인 1인 커플에 자기 자신만 추가.

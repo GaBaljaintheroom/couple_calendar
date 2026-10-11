@@ -179,6 +179,15 @@ class CoupleService {
     });
   }
 
+  /// 캘린더에 표시할 내 색. null이면 기본 색으로 돌아간다.
+  Future<void> setMyColor(String uid, int? argb) =>
+      _users.doc(uid).update({'color': argb ?? FieldValue.delete()});
+
+  /// "우리 함께" 일정 색. 두 사람 모두 바꿀 수 있고, null이면 기본 색으로 돌아간다.
+  Future<void> setTogetherColor(String coupleId, int? argb) => _couples
+      .doc(coupleId)
+      .update({'togetherColor': argb ?? FieldValue.delete()});
+
   /// 커플에서 나간다. 상대에게는 연결 대기 상태로 보이고, 함께 쓴 기록은 커플 문서에 남는다.
   Future<void> disconnect(UserProfile me) async {
     final coupleId = me.coupleId;

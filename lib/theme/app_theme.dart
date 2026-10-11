@@ -126,6 +126,15 @@ abstract final class AppTextStyles {
   );
 }
 
+/// 작은 버튼·이름표처럼 글자가 상자 가운데에 와야 할 때 쓰는 줄 높이.
+///
+/// 한글은 앱 글꼴에 없어 시스템 글꼴로 대신 그려지는데, 그 글꼴의 위아래 치수로
+/// 줄 높이를 잡으면 iOS에서 글자가 1pt쯤 위로 뜬다. 앱 글꼴 기준으로 고정한다.
+StrutStyle centeredStrut(TextStyle style) => StrutStyle.fromTextStyle(
+  style.copyWith(leadingDistribution: TextLeadingDistribution.even),
+  forceStrutHeight: true,
+);
+
 abstract final class AppTheme {
   static const colorScheme = ColorScheme(
     brightness: Brightness.light,

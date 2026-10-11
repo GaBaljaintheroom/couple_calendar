@@ -31,7 +31,12 @@ class Session {
     myBirthday: me.birthday,
     partnerBirthday: partner.birthday,
     calendarName: couple.calendarName ?? defaultCalendarName,
+    togetherColor: _color(couple.togetherColor),
+    myColor: _color(me.color),
+    partnerColor: _color(partner.color),
   );
+
+  static Color? _color(int? argb) => argb == null ? null : Color(argb);
 }
 
 /// 로그인 이후: Firestore 상태를 보고 온보딩 단계나 메인 화면을 보여준다.

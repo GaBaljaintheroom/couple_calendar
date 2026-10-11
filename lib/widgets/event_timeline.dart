@@ -56,6 +56,7 @@ class EventTimeline extends StatelessWidget {
               key: ValueKey(event.id),
               event: event,
               ownerName: profile.nameOf(event.owner),
+              ownerStyle: profile.styleOf(event.owner),
               isFirst: index == 0,
               isLast: index == events.length - 1,
               onEdit: () => onEdit(event),
@@ -72,6 +73,7 @@ class _TimelineRow extends StatelessWidget {
     super.key,
     required this.event,
     required this.ownerName,
+    required this.ownerStyle,
     required this.isFirst,
     required this.isLast,
     required this.onEdit,
@@ -80,6 +82,7 @@ class _TimelineRow extends StatelessWidget {
 
   final Event event;
   final String ownerName;
+  final OwnerStyle ownerStyle;
   final bool isFirst;
   final bool isLast;
   final VoidCallback onEdit;
@@ -114,7 +117,7 @@ class _TimelineRow extends StatelessWidget {
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
-                      color: event.owner.dotColor,
+                      color: ownerStyle.dot,
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.surface, width: 2),
                     ),
@@ -148,7 +151,11 @@ class _TimelineRow extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: _EventCard(event: event, ownerName: ownerName),
+                child: _EventCard(
+                  event: event,
+                  ownerName: ownerName,
+                  ownerStyle: ownerStyle,
+                ),
               ),
             ),
           ),
@@ -208,10 +215,15 @@ class _SwipeAction extends StatelessWidget {
 }
 
 class _EventCard extends StatelessWidget {
-  const _EventCard({required this.event, required this.ownerName});
+  const _EventCard({
+    required this.event,
+    required this.ownerName,
+    required this.ownerStyle,
+  });
 
   final Event event;
   final String ownerName;
+  final OwnerStyle ownerStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -229,8 +241,8 @@ class _EventCard extends StatelessWidget {
             children: [
               PillLabel(
                 text: ownerName,
-                background: event.owner.chipBackground,
-                foreground: event.owner.chipForeground,
+                background: ownerStyle.chipBackground,
+                foreground: ownerStyle.chipForeground,
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(

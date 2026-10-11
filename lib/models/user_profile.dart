@@ -9,6 +9,7 @@ class UserProfile {
     this.photoUrl,
     this.email,
     this.coupleId,
+    this.color,
   });
 
   final String uid;
@@ -17,6 +18,9 @@ class UserProfile {
   final String? photoUrl;
   final String? email;
   final String? coupleId;
+
+  /// 캘린더에 표시할 내 색 (ARGB). 고르지 않았으면 null (기본 색).
+  final int? color;
 
   bool get isComplete => name.trim().isNotEmpty;
 
@@ -29,6 +33,7 @@ class UserProfile {
       photoUrl: data['photoUrl'] as String?,
       email: data['email'] as String?,
       coupleId: data['coupleId'] as String?,
+      color: (data['color'] as num?)?.toInt(),
     );
   }
 }
@@ -42,6 +47,7 @@ class Couple {
     this.calendarName,
     this.inviteCode,
     this.inviteExpiresAt,
+    this.togetherColor,
   });
 
   final String id;
@@ -54,6 +60,9 @@ class Couple {
   /// 상대가 아직 합류하지 않았을 때만 있다.
   final String? inviteCode;
   final DateTime? inviteExpiresAt;
+
+  /// "우리 함께" 일정 색 (ARGB). 고르지 않았으면 null (기본 색).
+  final int? togetherColor;
 
   bool get isConnected => members.length == 2;
 
@@ -68,6 +77,7 @@ class Couple {
       calendarName: data['calendarName'] as String?,
       inviteCode: data['inviteCode'] as String?,
       inviteExpiresAt: (data['inviteExpiresAt'] as Timestamp?)?.toDate(),
+      togetherColor: (data['togetherColor'] as num?)?.toInt(),
     );
   }
 }

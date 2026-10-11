@@ -157,4 +157,20 @@ void main() {
     await service.setCalendarName(coupleId, '   ');
     expect((await readCouple(coupleId)).calendarName, isNull);
   });
+
+  test('내 색과 우리 함께 색을 저장하고, null이면 기본 색으로 돌아간다', () async {
+    final a = await user('a', '민준');
+    await service.createInvite(a);
+    final coupleId = (await readUser('a')).coupleId!;
+
+    await service.setMyColor('a', 0xFF2A9D8F);
+    await service.setTogetherColor(coupleId, 0xFFE9C46A);
+    expect((await readUser('a')).color, 0xFF2A9D8F);
+    expect((await readCouple(coupleId)).togetherColor, 0xFFE9C46A);
+
+    await service.setMyColor('a', null);
+    await service.setTogetherColor(coupleId, null);
+    expect((await readUser('a')).color, isNull);
+    expect((await readCouple(coupleId)).togetherColor, isNull);
+  });
 }

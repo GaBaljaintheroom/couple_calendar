@@ -4,8 +4,11 @@ import 'package:intl/intl.dart';
 import '../data/auth_service.dart';
 import '../data/couple_service.dart';
 import '../models/couple_profile.dart';
+import '../models/event.dart';
 import '../theme/app_theme.dart';
+import '../widgets/color_picker_sheet.dart';
 import '../widgets/couple_app_bar.dart';
+import '../widgets/owner_style.dart';
 import 'onboarding/onboarding_widgets.dart';
 import 'onboarding/profile_step.dart';
 import 'session_gate.dart';
@@ -45,6 +48,25 @@ class AccountScreen extends StatelessWidget {
     );
     if (name == null) return;
     await coupleService.setCalendarName(session.couple.id, name);
+  }
+
+  /// 우리 함께·내 색을 고른다. 상대 색은 상대가 자기 프로필에서 정한다.
+  Future<void> _editColor(BuildContext context, EventOwner owner) async {
+    final profile = session.coupleProfile;
+    final choice = await showOwnerColorSheet(
+      context,
+      title: owner == EventOwner.together ? '우리 함께 색' : '내 색',
+      previewLabel: profile.nameOf(owner),
+      current: profile.customColorOf(owner),
+      defaultStyle: OwnerStyle.defaultOf(owner),
+    );
+    if (choice == null) return;
+    final argb = choice.color?.toARGB32();
+    if (owner == EventOwner.together) {
+      await coupleService.setTogetherColor(session.couple.id, argb);
+    } else {
+      await coupleService.setMyColor(session.me.uid, argb);
+    }
   }
 
   Future<void> _confirmDisconnect(BuildContext context) async {
@@ -127,6 +149,31 @@ class AccountScreen extends StatelessWidget {
                 label: '상대 프로필',
                 value: '${partner.name} · ${birthdayText(partner.birthday)}',
               ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          const _SectionLabel('캘린더 색'),
+          _Group(
+            children: [
+              for (final owner in EventOwner.values)
+                _Row(
+                  icon: switch (owner) {
+                    EventOwner.together => Icons.favorite_border,
+                    EventOwner.me => Icons.person_outline,
+                    EventOwner.partner => Icons.person_outline,
+                  },
+                  label: switch (owner) {
+                    EventOwner.together => '우리 함께',
+                    EventOwner.me => '내 색',
+                    EventOwner.partner => '${partner.name}님 색',
+                  },
+                  value: '',
+                  trailing: _ColorDot(profile.styleOf(owner).dot),
+                  // 상대 색은 상대가 정한다.
+                  onTap: owner == EventOwner.partner
+                      ? null
+                      : () => _editColor(context, owner),
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -334,6 +381,7 @@ class _Row extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.trailing,
     this.onTap,
     this.neutralIcon = false,
   });
@@ -341,6 +389,9 @@ class _Row extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+
+  /// 값 글자 대신 오른쪽에 보여줄 위젯 (예: 색 점).
+  final Widget? trailing;
   final VoidCallback? onTap;
   final bool neutralIcon;
 
@@ -383,15 +434,17 @@ class _Row extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text(
-                  value,
-                  textAlign: TextAlign.right,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyMd.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
+                child: trailing != null
+                    ? Align(alignment: Alignment.centerRight, child: trailing)
+                    : Text(
+                        value,
+                        textAlign: TextAlign.right,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyMd.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
               ),
               if (onTap != null)
                 const Icon(
@@ -460,6 +513,26 @@ class _CalendarNameDialogState extends State<_CalendarNameDialog> {
           child: const Text('저장'),
         ),
       ],
+    );
+  }
+}
+
+class _ColorDot extends StatelessWidget {
+  const _ColorDot(this.color);
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.surfaceContainerLowest, width: 2),
+        boxShadow: AppShadows.card,
+      ),
     );
   }
 }

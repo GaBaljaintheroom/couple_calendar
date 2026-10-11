@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../models/couple_profile.dart';
 import '../models/event.dart';
 import '../theme/app_theme.dart';
 import 'owner_style.dart';
@@ -13,6 +14,7 @@ class MonthCalendarCard extends StatefulWidget {
     super.key,
     required this.focusedDay,
     required this.selectedDay,
+    required this.profile,
     required this.eventLoader,
     required this.onDaySelected,
     required this.onPageChanged,
@@ -20,6 +22,9 @@ class MonthCalendarCard extends StatefulWidget {
 
   final DateTime focusedDay;
   final DateTime selectedDay;
+
+  /// 일정 주인별 점 색을 정한다.
+  final CoupleProfile profile;
   final List<Event> Function(DateTime day) eventLoader;
   final void Function(DateTime selected, DateTime focused) onDaySelected;
   final ValueChanged<DateTime> onPageChanged;
@@ -92,7 +97,12 @@ class _MonthCalendarCardState extends State<MonthCalendarCard> {
 
   Widget _buildCell(DateTime day, _CellKind kind) {
     final owners = widget.eventLoader(day).map((e) => e.owner).toSet();
-    return _DayCell(day: day, kind: kind, owners: owners);
+    return _DayCell(
+      day: day,
+      kind: kind,
+      owners: owners,
+      profile: widget.profile,
+    );
   }
 }
 
@@ -129,7 +139,11 @@ class _Header extends StatelessWidget {
             onTap: onToday,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-              child: Text('오늘', style: AppTextStyles.labelSm),
+              child: Text(
+                '오늘',
+                style: AppTextStyles.labelSm,
+                strutStyle: centeredStrut(AppTextStyles.labelSm),
+              ),
             ),
           ),
         ),
@@ -180,11 +194,17 @@ class _DowLabel extends StatelessWidget {
 enum _CellKind { normal, today, selected, outside }
 
 class _DayCell extends StatelessWidget {
-  const _DayCell({required this.day, required this.kind, required this.owners});
+  const _DayCell({
+    required this.day,
+    required this.kind,
+    required this.owners,
+    required this.profile,
+  });
 
   final DateTime day;
   final _CellKind kind;
   final Set<EventOwner> owners;
+  final CoupleProfile profile;
 
   @override
   Widget build(BuildContext context) {
@@ -247,7 +267,9 @@ class _DayCell extends StatelessWidget {
                       height: 6,
                       margin: const EdgeInsets.symmetric(horizontal: 1),
                       decoration: BoxDecoration(
-                        color: selected ? owner.dotColorOnDark : owner.dotColor,
+                        color: selected
+                            ? profile.styleOf(owner).dotOnDark
+                            : profile.styleOf(owner).dot,
                         shape: BoxShape.circle,
                       ),
                     ),

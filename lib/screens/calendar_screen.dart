@@ -133,6 +133,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               MonthCalendarCard(
                 focusedDay: _focusedDay,
                 selectedDay: _selectedDay,
+                profile: profile,
                 eventLoader: _eventsOn,
                 onDaySelected: (selected, focused) => setState(() {
                   _selectedDay = selected;
@@ -209,7 +210,7 @@ class _OwnerFilterChips extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: value.dotColor,
+                      color: profile.styleOf(value).dot,
                       shape: BoxShape.circle,
                     ),
                   ),

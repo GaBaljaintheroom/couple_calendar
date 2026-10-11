@@ -1,3 +1,5 @@
+import 'package:flutter/painting.dart';
+
 import 'event.dart';
 
 /// 커플 정보. 지금은 고정값이고, 이후 연결(초대) 기능이 생기면 서버에서 받아온다.
@@ -12,6 +14,9 @@ class CoupleProfile {
     this.myBirthday,
     this.partnerBirthday,
     this.calendarName = defaultCalendarName,
+    this.togetherColor,
+    this.myColor,
+    this.partnerColor,
   });
 
   final String myName;
@@ -26,6 +31,17 @@ class CoupleProfile {
 
   /// 상단바에 보이는 이름. 커플이 우리공간에서 바꿀 수 있다.
   final String calendarName;
+
+  /// 일정 주인별로 고른 색. null이면 기본 색을 쓴다.
+  final Color? togetherColor;
+  final Color? myColor;
+  final Color? partnerColor;
+
+  Color? customColorOf(EventOwner owner) => switch (owner) {
+    EventOwner.together => togetherColor,
+    EventOwner.me => myColor,
+    EventOwner.partner => partnerColor,
+  };
 
   String nameOf(EventOwner owner) => switch (owner) {
     EventOwner.together => '우리 함께',
